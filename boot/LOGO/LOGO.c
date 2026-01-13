@@ -1,31 +1,20 @@
-/*this is a level 1 kernel file to 
-1.load logo to display
-2.set global descriptor table
-3.set interrupt descriptor table
-4.set paging and open paging
-It's great to write a OS and open source it
-*/
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
+#define PG_BASE 0x00060000
 extern void idt_init();
 extern void paging_enable();
 extern void load_logo();
-uint32_t *PG_address = (uint32_t*)0x00100000;
-void page_table_init(int x){
-    uint32_t *pg_t_address = (uint32_t*)(0x00001000*(x+1)+0x00100000);
-    for(int i=0;i<1024;i++){
-        pg_t_address[i] = (0x00001000*i+0x00400000*x) | 0x3;
-    }
-}
+uint32_t *PG_address = (uint32_t*)0x00060000;
 void paging_init(){
     for(int i=0;i<1024;i++){
-        PG_address[i] = (0x00001000*(i+1)+0x00100000) | 0x3;
-        page_table_init(i);
+        uint32_t *pte_address = (uint32_t*)(PG_BASE+(i+1)*0x1000);
+        PG_address[i] = ((uint32_t)pte_address) | 0x3;
+        for(int j=0;j<1024;j++){
+            pte_address[j] = (i*0x400000 + j*0x1000) | 0x3;
+        }
     }
     paging_enable();
 }
-void main(){
+void C(){
     idt_init();
     paging_init();
     load_logo();

@@ -15,7 +15,7 @@ setup:
 move:
     mov dx,0x0080
     mov cx,0x000A
-    mov bx,0x8000
+    mov bx,0x6000
     mov ax,0x0240
     int 0x13
     jnc get_inf
@@ -102,6 +102,8 @@ a20:
     in al,0x92
     or al,2
     out 0x92,al
+idt_init:
+    lidt [idtr_inf]
 gdt_init: 
     mov ax,0x1000
     mov es,ax
@@ -117,9 +119,9 @@ set_vbe:
     mov cx, 0x105
     mov di, mode_info
     int 0x10
-    mov dword [mode_info+0x28],0xA0000000
+    mov dword [mode_info+0x28],0xC0000000
     mov ax, 0x4F02
-    mov bx, 0x105 | 0x4000
+    mov bx, 0x4105
     mov di, mode_info
     int 0x10
     cmp ax, 0x004F
@@ -130,7 +132,10 @@ _protect_mode:
     mov eax, cr0
     or eax, 0x1
     mov cr0, eax
-    jmp 0x8:0x8000
+    jmp 0x8:0x6000
+idtr_inf:
+    dw 0x07FF
+    dd 0x00006000
 gdtr_inf:
     dw 0x00FF
     dd 0x00001000
