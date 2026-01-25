@@ -6,36 +6,143 @@ section .text
     global _paging_enable
     global _load_logo
     global _jmp_main
+    global _load_kernel
 _jmp_main:
     lss esp,[stark_inf]
     call _C
+    jmp 0x8:0x20000
+    call _error
 __main:
     ret
 _DE:
+    cli
+    pushad
+    call _error 
+    popad
+    iret 
+_DB:
+    cli
+    pushad 
+    call _error
+    popad
+    iret 
+_NMI:
+    cli
+    pushad 
+    call _error 
+    popad
+    iret
+_BP:
+    cli
+    pushad 
+    call _error
+    popad
+    iret 
+_OF:
+    cli
     pushad
     cli
     call _error
     popad
-    iret
-_DB:
-_NMI:
-_BP:
-_OF:
+    iret 
 _BR:
+    cli
+    pushad 
+    call _error
+    popad 
+    iret
 _UD:
+    cli
+    pushad
+    call _error
+    popad 
+    iret
 _NM:
+    cli
+    pushad 
+    call _error
+    popad
+    iret 
 _DF:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _TS:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _NP:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _SS:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _GP:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _PF:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _MF:
+    cli
+    pushad 
+    call _error 
+    popad
+    iret
 _AC:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _MC:
+    cli
+    pushad
+    call _error
+    popad
+    iret 
 _XM:
+    cli
+    pushad
+    call _error 
+    popad
+    iret 
 _VE:
+    cli
+    pushad
+    call _error
+    popad 
+    iret
 _CP:
+    cli
+    add esp, 4
+    pushad
+    call _error
+    popad
+    iret
 _HARDDISK:
     cmp ah,0x00
     je _HDREAD
@@ -100,7 +207,6 @@ _READHD:
     sub ebx,2
     cmp ebx,0
     jne _READHD
-    iret
 _HDWRITE:
 _VIDEO:
 _KEYBOARD:
@@ -285,7 +391,30 @@ _idt_init:
     mov word [0x2104],0x8E00
     mov word [0x2106],ax
 
+    lea eax,_VIDEO
+    add eax,0x8000
+    mov word [0x2108],ax
+    mov word [0x210A],0x10
+    shr eax,16
+    mov word [0x210C],0x8E00
+    mov word [0x210E],ax
+
+    lea eax,_KEYBOARD
+    add eax,0x8000
+    mov word [0x2110],ax
+    mov word [0x2112],0x10
+    shr eax,16
+    mov word [0x2114],0x8E00
+    mov word [0x2116],ax    
+
     lidt [idtr_inf]
+    ret
+_load_kernel:
+    mov ah,0x00
+    mov ebx,0x00000200
+    mov ecx,0x00020000
+    mov esi,0x0012C000
+    int 0x20
     ret
 _paging_enable:
     mov eax,0x00060000
@@ -298,22 +427,23 @@ idtr_inf:
     dw 0x07FF
     dd 0x00002000
 stark_inf:
-    dd 0xA0000000  ;  
+    dd 0xFFF00000
     dd 0x10
 _load_logo:
     mov ah,0x00
     mov ebx,0x00001200
-    mov ecx,0xC0000000
+    mov ecx,0xFC000000
     mov esi,0x0012C208
     int 0x20
+    ret
 _error:
     mov ah,0x00
     mov ebx,0x00001200
-    mov ecx,0xC0000000
+    mov ecx,0xFC000000
     mov esi,0x0012D410
     int 0x20
-    in al, 0x64
-    test al, 1
+    in al,0x64
+    test al,1
     jz _error
     in al, 0x60
     ret

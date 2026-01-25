@@ -3,6 +3,7 @@
 extern void idt_init();
 extern void paging_enable();
 extern void load_logo();
+extern void load_kernel();
 uint32_t *PG_address = (uint32_t*)0x00060000;
 void paging_init(){
     for(int i=0;i<1024;i++){
@@ -18,4 +19,5 @@ void C(){
     idt_init();
     paging_init();
     load_logo();
+    load_kernel();
 }

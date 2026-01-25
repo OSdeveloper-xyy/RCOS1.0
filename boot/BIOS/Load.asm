@@ -3,16 +3,17 @@ bits 16
 section .text
     global setup
 setup:
-    mov ax,0x0000
+    mov ax,0x0000;初始化段寄存器
     mov ds,ax
     mov es,ax
-    mov ax,0x1301
+    mov ax,0x1301;输出字符串
     mov bx, 0x0007
     mov dx, 0x0200
     mov bp,msg1
     mov cx,27
     int 0x10
 move:
+    ;从硬盘读取LOGO部分到内存0x6000处
     mov dx,0x0080
     mov cx,0x000A
     mov bx,0x6000
@@ -21,25 +22,28 @@ move:
     jnc get_inf
     jc _error
 get_inf:
-    mov ax,0xB828
+    mov ax,0xB828;设置文本输出位置
     mov es,ax
+    ;输出进度条框架
     mov dword [es:0],0x07200720
     mov dword [es:4],0x07200725
     mov dword [es:160],0x07200720
     mov dword [es:164],0x0720075B
     mov dword [es:196],0x075D0720
-    mov ah,0x0F
-    int 0x10
-    mov [0x3000],al
+    ;系统版本号
+    mov word [0x3000],0x0001
+    ;进度条更新
     mov word [es:6],0x0739
     mov word [es:166],0x073D
     mov word [es:168],0x073D
+    ;显卡配置获取
     mov ah,0x12
     mov bl,0x10
     int 0x10
     mov [0x3001],bh
     mov [0x3002],bl
     mov [0x3003],ah
+    ;进度条更新
     mov byte [es:6],0x32
     mov word [es:8],0x0734
     mov word [es:170],0x073D
@@ -98,44 +102,30 @@ get_inf:
     int 0x10
     mov ah, 0x00
     int 0x16
+gdt_init: 
+    mov dword [0x1000],0x00000000
+    mov dword [0x1004],0x00000000
+    mov dword [0x1008],0x0000FFFF
+    mov dword [0x100C],0x00CF9A00
+    mov dword [0x1010],0x0000FFFF
+    mov dword [0x101A],0x00CF9200
+    lgdt [gdtr_inf]
 a20:
     in al,0x92
     or al,2
     out 0x92,al
-idt_init:
-    lidt [idtr_inf]
-gdt_init: 
-    mov ax,0x1000
-    mov es,ax
-    mov dword [es:0],0x00000000
-    mov dword [es:4],0x00000000
-    mov dword [es:8],0x0000FFFF
-    mov dword [es:12],0x00CF9A00
-    mov dword [es:16],0x0000FFFF
-    mov dword [es:20],0x00CF9200
-    lgdt [gdtr_inf]
 set_vbe:
-    mov ax, 0x4F01
-    mov cx, 0x105
-    mov di, mode_info
-    int 0x10
-    mov dword [mode_info+0x28],0xC0000000
+    mov dword [_info+0x28],0xFC000000
     mov ax, 0x4F02
     mov bx, 0x4105
-    mov di, mode_info
+    mov di, _info
     int 0x10
-    cmp ax, 0x004F
-    jne _error
-    jnc _protect_mode
 _protect_mode:
     cli
     mov eax, cr0
-    or eax, 0x1
-    mov cr0, eax
+    add eax,0x1
+    mov cr0,eax
     jmp 0x8:0x6000
-idtr_inf:
-    dw 0x07FF
-    dd 0x00006000
 gdtr_inf:
     dw 0x00FF
     dd 0x00001000
@@ -154,4 +144,5 @@ msg1 db 'Load and get information...'
 msg2 db 'Load error!!!'
 msg3 db 'Get information succeed!'
 msg4 db 'Press any key to continue...'
-mode_info times 256 db 0
+_info times 256 db 0
+times 2048 - ($ - $$) db 0
