@@ -3,6 +3,9 @@ org 0x7C00;0x7c00引导扇区的内存地址
 section .text
     global _start
 _start:
+    mov ax,0x1000;设置堆栈段地址
+    mov ss,ax
+    mov sp,0x0000;设置堆栈顶地址
     mov ax,0x0003;设置为80x25文本模式
     int 0x10
     mov ax,0x0000;初始化段寄存器

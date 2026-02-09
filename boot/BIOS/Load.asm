@@ -54,6 +54,7 @@ get_inf:
     mov [0x3005],dl
     mov [0x3006],ch
     mov [0x3007],cl
+    ;进度条更新
     mov byte [es:6],0x34
     mov byte [es:8],0x35
     mov word [es:174],0x073D
@@ -108,17 +109,17 @@ gdt_init:
     mov dword [0x1008],0x0000FFFF
     mov dword [0x100C],0x00CF9A00
     mov dword [0x1010],0x0000FFFF
-    mov dword [0x101A],0x00CF9200
+    mov dword [0x1014],0x00CF9200
+    mov dword [0x1018],0xFFFF00FF
+    mov dword [0x101C],0xFFC096FF
     lgdt [gdtr_inf]
 a20:
     in al,0x92
     or al,2
     out 0x92,al
 set_vbe:
-    mov dword [_info+0x28],0xFC000000
     mov ax, 0x4F02
     mov bx, 0x4105
-    mov di, _info
     int 0x10
 _protect_mode:
     cli
@@ -133,9 +134,11 @@ _error:
     mov ax,0x0000
     mov ds,ax
     mov es,ax
+    mov ax,0x3
+    int 0x10
     mov ax,0x1301
     mov bx, 0x0004
-    mov dx, 0x0300
+    mov dx, 0x0A18
     mov bp,msg2
     mov cx,13
     int 0x10
@@ -144,5 +147,4 @@ msg1 db 'Load and get information...'
 msg2 db 'Load error!!!'
 msg3 db 'Get information succeed!'
 msg4 db 'Press any key to continue...'
-_info times 256 db 0
-times 2048 - ($ - $$) db 0
+times 4096 - ($ - $$) db 0
